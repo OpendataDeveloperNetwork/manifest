@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "datasets": [
+    {
+      "name": "Public Art",
+      "country": "CA",
+      "subdivision": "BC",
+      "region": "Regional District of Fraser-Fort George",
+      "city": "Prince George",
+      "provider": "City of Prince George",
+      "id": "56cb9c81abe919b3d781d7a01c732a80ecb8933d37f472f52c333bdc81af4e07",
+      "downloads": [
+        {
+          "src": "https://data-cityofpg.opendata.arcgis.com/datasets/5ac5ec14f6f846f49d627d975692b415_0.kml",
+          "encoding": "utf8"
+        }
+      ]
+    },
+    {
+      "name": "Public Art",
+      "country": "CA",
+      "subdivision": "BC",
+      "region": "Capital Regional District",
+      "city": "Victoria",
+      "provider": "The Corporation of the City of Victoria",
+      "id": "4ce230552e9a8059b8688ba523057ccf4b986baa6c1ab995783e6538fcf40e5b",
+      "downloads": [
+        {
+          "src": "http://opendata.victoria.ca/datasets/d93b66f36af84802a904d07d8238d8a3_1.kml",
+          "encoding": "utf8"
+        }
+      ]
+    },
+    {
+      "name": "Public Art",
+      "country": "CA",
+      "subdivision": "BC",
+      "region": "Metro Vancouver Regional District",
+      "city": "New Westminster",
+      "provider": "The Corporation of the City of New Westminster",
+      "id": "2906522288f174e54e8dd6ba7957e66c6a3a9e0577e62b3b581c6be767fde747",
+      "downloads": [
+        {
+          "src": "http://opendata.newwestcity.ca/downloads/public-art/PUBLIC_ART.json",
+          "encoding": "utf8"
+        }
+      ]
+    }
+  ]
+}
