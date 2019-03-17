@@ -1,6 +1,5 @@
 package net.opendatadev;
 
-import com.google.common.io.Files;
 import io.transmogrifier.Filter;
 import io.transmogrifier.FilterException;
 import io.transmogrifier.Transmogrifier;
@@ -15,9 +14,20 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ *
+ */
 public class DatasetToPipelineFilter
         extends ItemToPipelineFilter<Dataset, Download>
 {
+    /**
+     * @param outerScope
+     * @param dataset
+     * @param transmogrifier
+     * @return
+     * @throws IOException
+     * @throws FilterException
+     */
     @Override
     protected Scope createScope(final Scope outerScope,
                                 final Dataset dataset,
@@ -32,8 +42,8 @@ public class DatasetToPipelineFilter
 
         rootDir = outerScope.getValue("rootDir");
         datasetDir = transmogrifier.transform(dataset,
-                                        rootDir,
-                                        new DatasetToDirFilter());
+                                              rootDir,
+                                              new DatasetToDirFilter());
         scope = new Scope(outerScope);
         scope.addConstant("datasetDir",
                           datasetDir);
@@ -41,11 +51,18 @@ public class DatasetToPipelineFilter
         return scope;
     }
 
+    /**
+     * @param dataset
+     * @return
+     */
     protected List<Download> getItemsFrom(final Dataset dataset)
     {
         return dataset.getDownloads();
     }
 
+    /**
+     * @return
+     */
     protected Filter<Download, State, Pipeline> getFilter()
     {
         return new DownloadToPipelineFilter();

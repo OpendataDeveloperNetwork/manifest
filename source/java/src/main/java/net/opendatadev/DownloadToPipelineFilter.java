@@ -21,9 +21,18 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ */
 public class DownloadToPipelineFilter
         implements Filter<Download, State, Pipeline>
 {
+    /**
+     * @param download
+     * @param state
+     * @return
+     * @throws FilterException
+     */
     @Override
     public Pipeline perform(final Download download,
                             final State state)
@@ -59,8 +68,11 @@ public class DownloadToPipelineFilter
             contentsVariable = scope.addVariable("str",
                                                  null);
             datasetDir = scope.getValue("datasetDir");
-            file = transmogrifier.transform(download, datasetDir, new DownloadToFileFilter());
-            fileConstant = scope.addConstant("file",  file);
+            file = transmogrifier.transform(download,
+                                            datasetDir,
+                                            new DownloadToFileFilter());
+            fileConstant = scope.addConstant("file",
+                                             file);
             System.out.println(scope);
 
             entries = new ArrayList<>();

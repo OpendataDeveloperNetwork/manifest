@@ -11,8 +11,15 @@ import net.opendatadev.filters.StringToManifestFilter;
 
 import java.io.File;
 
+/**
+ *
+ */
 public class Main
 {
+    /**
+     * @param argv
+     * @throws FilterException
+     */
     public static void main(final String[] argv)
             throws
             FilterException
@@ -34,7 +41,8 @@ public class Main
         checkDir(rootDir);
 
         scope = new Scope();
-        scope.addConstant("rootDir", rootDir);
+        scope.addConstant("rootDir",
+                          rootDir);
         transmogrifier = new Transmogrifier();
         conductor = new Conductor();
         state = new State(transmogrifier,
@@ -53,6 +61,9 @@ public class Main
                                  conductor);
     }
 
+    /**
+     * @param entry
+     */
     private static void checkFile(final File entry)
     {
         checkEntry(entry);
@@ -63,6 +74,9 @@ public class Main
         }
     }
 
+    /**
+     * @param entry
+     */
     private static void checkDir(final File entry)
     {
         checkEntry(entry);
@@ -73,6 +87,9 @@ public class Main
         }
     }
 
+    /**
+     * @param entry
+     */
     private static void checkEntry(final File entry)
     {
         if(!(entry.exists()))

@@ -13,9 +13,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @param <T>
+ * @param <S>
+ */
 public abstract class ItemToPipelineFilter<T, S>
         implements Filter<T, State, Pipeline>
 {
+    /**
+     * @param object
+     * @param state
+     * @return
+     * @throws FilterException
+     */
     @Override
     public Pipeline perform(final T object,
                             final State state)
@@ -69,6 +79,14 @@ public abstract class ItemToPipelineFilter<T, S>
         return pipeline;
     }
 
+    /**
+     * @param outerScope
+     * @param item
+     * @param transmogrifier
+     * @return
+     * @throws IOException
+     * @throws FilterException
+     */
     protected Scope createScope(final Scope outerScope,
                                 final T item,
                                 final Transmogrifier transmogrifier)
@@ -83,7 +101,14 @@ public abstract class ItemToPipelineFilter<T, S>
         return scope;
     }
 
+    /**
+     * @param item
+     * @return
+     */
     protected abstract List<S> getItemsFrom(T item);
 
+    /**
+     * @return
+     */
     protected abstract Filter<S, State, Pipeline> getFilter();
 }

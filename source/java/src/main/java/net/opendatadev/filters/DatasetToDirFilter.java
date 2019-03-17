@@ -9,9 +9,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ *
+ */
 public class DatasetToDirFilter
         implements Filter<Dataset, File, File>
 {
+    /**
+     * @param dataset
+     * @param parent
+     * @return
+     * @throws FilterException
+     */
     @Override
     public File perform(final Dataset dataset,
                         final File parent)
@@ -33,11 +42,11 @@ public class DatasetToDirFilter
         city = dataset.getCity();
         provider = dataset.getProvider();
         dirPath = String.format("%s/%s/%s/%s/%s",
-                             country,
-                             subdivision,
-                             region,
-                             city,
-                             provider);
+                                country,
+                                subdivision,
+                                region,
+                                city,
+                                provider);
         dir = new File(parent,
                        dirPath);
         path = dir.toPath();
@@ -48,7 +57,8 @@ public class DatasetToDirFilter
         }
         catch(final IOException ex)
         {
-            throw new FilterException(ex.getMessage(), ex);
+            throw new FilterException(ex.getMessage(),
+                                      ex);
         }
 
         return dir;
