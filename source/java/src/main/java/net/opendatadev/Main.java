@@ -2,12 +2,9 @@ package net.opendatadev;
 
 import io.transmogrifier.FilterException;
 import io.transmogrifier.Transmogrifier;
-import io.transmogrifier.conductor.Conductor;
-import io.transmogrifier.conductor.Pipeline;
-import io.transmogrifier.conductor.Scope;
-import io.transmogrifier.conductor.State;
-import io.trasnmogrifier.filter.FileFilters.FileToStringFilter;
-import net.opendatadev.filters.StringToManifestFilter;
+import io.transmogrifier.UnaryFilter;
+import io.transmogrifier.VerboseTransmogrifier;
+import io.trasnmogrifier.filter.FileFilters.UnaryFileToStringFilter;
 
 import java.io.File;
 
@@ -24,41 +21,21 @@ public class Main
             throws
             FilterException
     {
-        final Scope          scope;
-        final Transmogrifier transmogrifier;
-        final Conductor      conductor;
-        final State          state;
-        final File           file;
-        final String         json;
-        final File           rootDir;
-        final Manifest       manifest;
-        final Pipeline       pipeline;
+        final File                      file;
+        final File                      rootDir;
+        final UnaryFilter<File, String> toJSONStringFilter;
+        final ManifestFilter<File>      manifestFilter;
+        final Transmogrifier            transmogrifier;
 
         file = new File(argv[0]);
         rootDir = new File(argv[1]);
-
-        checkFile(file);
-        checkDir(rootDir);
-
-        scope = new Scope();
-        scope.addConstant("rootDir",
-                          rootDir);
+        toJSONStringFilter = new UnaryFileToStringFilter();
         transmogrifier = new Transmogrifier();
-        conductor = new Conductor();
-        state = new State(transmogrifier,
-                          conductor,
-                          scope);
-
-        json = transmogrifier.transform(file,
-                                        new FileToStringFilter());
-        manifest = transmogrifier.transform(json,
-                                            new StringToManifestFilter());
-        pipeline = transmogrifier.transform(manifest,
-                                            state,
-                                            new ManifestToPipelineFilter());
-        transmogrifier.transform(pipeline,
-                                 state,
-                                 conductor);
+        manifestFilter = new ManifestFilter<>(transmogrifier,
+                                              rootDir);
+        transmogrifier.transform(file,
+                                 toJSONStringFilter,
+                                 manifestFilter);
     }
 
     /**

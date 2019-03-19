@@ -39,8 +39,6 @@ public class DownloadToPipelineFilter
             throws
             FilterException
     {
-        System.out.println("C " + download.getSrc());
-
         // [url DownloadToString -> str]
         // [str ProcessEntry -> str]
         // [str WriteToFile: filename]
@@ -73,8 +71,6 @@ public class DownloadToPipelineFilter
                                             new DownloadToFileFilter());
             fileConstant = scope.addConstant("file",
                                              file);
-            System.out.println(scope);
-
             entries = new ArrayList<>();
             entries.add(new FilterEntry<>(state,
                                           new URLToStringFilter(),
