@@ -11,7 +11,6 @@ import net.opendatadev.Manifest.Dataset.Download;
 import net.opendatadev.filters.DatasetToDirFilter;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -25,15 +24,13 @@ public class DatasetToPipelineFilter
      * @param dataset
      * @param transmogrifier
      * @return
-     * @throws IOException
      * @throws FilterException
      */
     @Override
-    protected Scope createScope(final Scope outerScope,
-                                final Dataset dataset,
-                                final Transmogrifier transmogrifier)
+    protected Scope createItemScope(final Scope outerScope,
+                                    final Dataset dataset,
+                                    final Transmogrifier transmogrifier)
             throws
-            IOException,
             FilterException
     {
         final File  rootDir;

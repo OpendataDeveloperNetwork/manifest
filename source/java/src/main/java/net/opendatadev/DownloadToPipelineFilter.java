@@ -8,6 +8,7 @@ import io.transmogrifier.conductor.Pipeline;
 import io.transmogrifier.conductor.Scope;
 import io.transmogrifier.conductor.State;
 import io.transmogrifier.conductor.Variable;
+import io.transmogrifier.conductor.entries.BackgroundPipelineEntry;
 import io.transmogrifier.conductor.entries.Entry;
 import io.transmogrifier.conductor.entries.FilterEntry;
 import io.trasnmogrifier.filter.FileFilters.StringToFileFilter;
@@ -20,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  *
@@ -39,6 +41,10 @@ public class DownloadToPipelineFilter
             throws
             FilterException
     {
+        // [url DownloadToString] -> str
+        // [str ProcessEntry] -> str
+        // [str WriteToFile: filename]
+        // or
         // [url DownloadToString -> str]
         // [str ProcessEntry -> str]
         // [str WriteToFile: filename]
@@ -47,16 +53,19 @@ public class DownloadToPipelineFilter
 
         try
         {
-            final Transmogrifier       transmogrifier;
-            final Scope                outerScope;
-            final Scope                scope;
-            final Constant<URL>        urlConstant;
-            final File                 datasetDir;
-            final File                 file;
-            final Constant<File>       fileConstant;
-            final Variable<String>     contentsVariable;
-            final List<Entry<?, ?, ?>> entries;
-            final Pipeline             pipeline;
+            final Transmogrifier          transmogrifier;
+            final Scope                   outerScope;
+            final Scope                   scope;
+            final Constant<URL>           urlConstant;
+            final File                    datasetDir;
+            final File                    file;
+            final Constant<File>          fileConstant;
+            final Variable<String>        contentsVariable;
+            final List<Entry<?, ?, ?>>    entries;
+            final BackgroundPipelineEntry backgroundPipelineEntry;
+            final Pipeline                backgroundPipeline;
+            final Pipeline                pipeline;
+            final ExecutorService         executorService;
 
             transmogrifier = state.getTransmogrifier();
             outerScope = state.getScope();
@@ -81,8 +90,24 @@ public class DownloadToPipelineFilter
                                           new StringToFileFilter(),
                                           contentsVariable,
                                           fileConstant));
+            /*
+            entries.add(new FilterEntry<>(state,
+                                          (entry, ignore) ->
+                                          {
+                                              System.out.println(entry);
+
+                                              return null;
+                                          },
+                                          contentsVariable));
+            */
+            backgroundPipeline = new Pipeline(scope,
+                                              entries);
+            executorService = outerScope.getValue("downloadsExecutorService");
+            backgroundPipelineEntry = new BackgroundPipelineEntry(state,
+                                                                  backgroundPipeline,
+                                                                  executorService);
             pipeline = new Pipeline(scope,
-                                    entries);
+                                    backgroundPipelineEntry);
 
             return pipeline;
         }

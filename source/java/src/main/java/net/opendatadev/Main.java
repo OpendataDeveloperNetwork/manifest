@@ -3,7 +3,6 @@ package net.opendatadev;
 import io.transmogrifier.FilterException;
 import io.transmogrifier.Transmogrifier;
 import io.transmogrifier.UnaryFilter;
-import io.transmogrifier.VerboseTransmogrifier;
 import io.trasnmogrifier.filter.FileFilters.UnaryFileToStringFilter;
 
 import java.io.File;

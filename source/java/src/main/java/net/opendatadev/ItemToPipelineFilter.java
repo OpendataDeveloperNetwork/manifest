@@ -9,7 +9,6 @@ import io.transmogrifier.conductor.State;
 import io.transmogrifier.conductor.entries.Entry;
 import io.transmogrifier.conductor.entries.PipelineEntry;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,56 +41,46 @@ public abstract class ItemToPipelineFilter<T, S>
 
         transmogrifier = state.getTransmogrifier();
         outerScope = state.getScope();
-        scope = new Scope(outerScope);
+        scope = createPipelineScope(outerScope);
         items = getItemsFrom(object);
         entries = new ArrayList<>();
         filter = getFilter();
 
         for(final S item : items)
         {
-            try
-            {
-                final Scope    itemScope;
-                final Pipeline itemPipeline;
-                final State    itemState;
+            final Scope         itemScope;
+            final Pipeline      itemPipeline;
+            final State         itemState;
+            final PipelineEntry pipelineEntry;
 
-                itemScope = createScope(scope,
+            itemScope = createItemScope(scope,
                                         object,
                                         transmogrifier);
-                itemState = new State(state,
-                                      itemScope);
-                itemPipeline = transmogrifier.transform(item,
-                                                        itemState,
-                                                        filter);
-                entries.add(new PipelineEntry(itemState,
-                                              itemPipeline));
-            }
-            catch(final IOException ex)
-            {
-                throw new FilterException(ex.getMessage(),
-                                          ex);
-            }
+            itemState = new State(state,
+                                  itemScope);
+            itemPipeline = transmogrifier.transform(item,
+                                                    itemState,
+                                                    filter);
+            pipelineEntry = new PipelineEntry(itemState,
+                                              itemPipeline);
+            entries.add(pipelineEntry);
         }
 
         pipeline = new Pipeline(scope,
                                 entries);
+
+        addPipelineListener(pipeline);
 
         return pipeline;
     }
 
     /**
      * @param outerScope
-     * @param item
-     * @param transmogrifier
      * @return
-     * @throws IOException
      * @throws FilterException
      */
-    protected Scope createScope(final Scope outerScope,
-                                final T item,
-                                final Transmogrifier transmogrifier)
+    protected Scope createPipelineScope(final Scope outerScope)
             throws
-            IOException,
             FilterException
     {
         final Scope scope;
@@ -99,6 +88,33 @@ public abstract class ItemToPipelineFilter<T, S>
         scope = new Scope(outerScope);
 
         return scope;
+    }
+
+    /**
+     * @param outerScope
+     * @param item
+     * @param transmogrifier
+     * @return
+     * @throws FilterException
+     */
+    protected Scope createItemScope(final Scope outerScope,
+                                    final T item,
+                                    final Transmogrifier transmogrifier)
+            throws
+            FilterException
+    {
+        final Scope scope;
+
+        scope = new Scope(outerScope);
+
+        return scope;
+    }
+
+    /**
+     * @param pipeline
+     */
+    public void addPipelineListener(final Pipeline pipeline)
+    {
     }
 
     /**
