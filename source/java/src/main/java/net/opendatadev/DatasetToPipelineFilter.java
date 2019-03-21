@@ -4,8 +4,8 @@ import io.transmogrifier.Filter;
 import io.transmogrifier.FilterException;
 import io.transmogrifier.Transmogrifier;
 import io.transmogrifier.conductor.Pipeline;
+import io.transmogrifier.conductor.PipelineListener;
 import io.transmogrifier.conductor.Scope;
-import io.transmogrifier.conductor.State;
 import net.opendatadev.Manifest.Dataset;
 import net.opendatadev.Manifest.Dataset.Download;
 import net.opendatadev.filters.DatasetToDirFilter;
@@ -27,9 +27,9 @@ public class DatasetToPipelineFilter
      * @throws FilterException
      */
     @Override
-    protected Scope createItemScope(final Scope outerScope,
-                                    final Dataset dataset,
-                                    final Transmogrifier transmogrifier)
+    protected Scope createPipelineScope(final Scope outerScope,
+                                        final Dataset dataset,
+                                        final Transmogrifier transmogrifier)
             throws
             FilterException
     {
@@ -44,8 +44,53 @@ public class DatasetToPipelineFilter
         scope = new Scope(outerScope);
         scope.addConstant("datasetDir",
                           datasetDir);
+        scope.addConstant("dataset",
+                          dataset);
 
         return scope;
+    }
+
+    /**
+     * @param pipeline
+     */
+    public void addPipelineListener(final Pipeline pipeline,
+                                    final ManifestState state)
+    {
+        pipeline.addPipelineEntryListener(new PipelineListener()
+        {
+            @Override
+            public void startingPerformance()
+            {
+                final Scope    scope;
+                final Manifest manifest;
+                final Dataset  dataset;
+
+                scope = pipeline.getScope();
+                manifest = scope.getValue("manifest");
+                dataset = scope.getValue("dataset");
+                state.sendStartingDataset(manifest,
+                                          dataset);
+            }
+
+            /**
+             *
+             */
+            @Override
+            public void completedPerformance()
+            {
+                final Scope    scope;
+                final Manifest manifest;
+                final Dataset  dataset;
+
+                scope = pipeline.getScope();
+                manifest = scope.getValue("manifest");
+                dataset = scope.getValue("dataset");
+                state.sendFinishedDataset(manifest,
+                                          dataset,
+                                          null,
+                                          null);
+            }
+        });
     }
 
     /**
@@ -60,7 +105,7 @@ public class DatasetToPipelineFilter
     /**
      * @return
      */
-    protected Filter<Download, State, Pipeline> getFilter()
+    protected Filter<Download, ManifestState, Pipeline> getFilter()
     {
         return new DownloadToPipelineFilter();
     }

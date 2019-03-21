@@ -7,7 +7,7 @@ import io.transmogrifier.UnaryFilter;
 import io.transmogrifier.conductor.Conductor;
 import io.transmogrifier.conductor.Pipeline;
 import io.transmogrifier.conductor.Scope;
-import io.transmogrifier.conductor.State;
+import net.opendatadev.Manifest.Dataset;
 import net.opendatadev.filters.StringToManifestFilter;
 
 import java.io.File;
@@ -48,12 +48,12 @@ public class ManifestFilter<T>
             throws
             FilterException
     {
-        final Scope     scope;
-        final Conductor conductor;
-        final State     state;
-        final String    json;
-        final Manifest  manifest;
-        final Pipeline  pipeline;
+        final Scope         scope;
+        final Conductor     conductor;
+        final ManifestState state;
+        final String        json;
+        final Manifest      manifest;
+        final Pipeline      pipeline;
 
         json = transmogrifier.transform(manifestSource,
                                         toJSONStringFilter);
@@ -63,9 +63,40 @@ public class ManifestFilter<T>
         scope.addConstant("rootDir",
                           rootDir);
         conductor = new Conductor();
-        state = new State(transmogrifier,
-                          conductor,
-                          scope);
+        state = new ManifestState(transmogrifier,
+                                  conductor,
+                                  scope);
+        state.addManifestListener(new ManifestListener()
+        {
+            @Override
+            public void starting(final Manifest manifest)
+            {
+                System.out.println("starting " + manifest);
+            }
+
+            @Override
+            public void finished(final Manifest manifest)
+            {
+                System.out.println("finished " + manifest);
+            }
+
+            @Override
+            public void starting(final Manifest manifest,
+                                 final Dataset dataset)
+            {
+                System.out.println("starting " + manifest + " " + dataset);
+            }
+
+            @Override
+            public void finished(final Manifest manifest,
+                                 final Dataset dataset,
+                                 final File rawFile,
+                                 final File convertedFile)
+            {
+                System.out.println("finished " + manifest + " " + dataset);
+            }
+        });
+
         pipeline = transmogrifier.transform(manifest,
                                             state,
                                             new ManifestToPipelineFilter());

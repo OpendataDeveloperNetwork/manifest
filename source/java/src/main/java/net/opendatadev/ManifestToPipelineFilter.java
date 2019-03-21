@@ -6,13 +6,12 @@ import io.transmogrifier.Transmogrifier;
 import io.transmogrifier.conductor.Pipeline;
 import io.transmogrifier.conductor.PipelineListener;
 import io.transmogrifier.conductor.Scope;
-import io.transmogrifier.conductor.State;
-import io.transmogrifier.conductor.entries.Entry;
 import net.opendatadev.Manifest.Dataset;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -26,13 +25,17 @@ public class ManifestToPipelineFilter
      * @throws FilterException
      */
     @Override
-    protected Scope createPipelineScope(final Scope outerScope)
+    protected Scope createPipelineScope(final Scope outerScope,
+                                        final Manifest manifest,
+                                        final Transmogrifier transmogrifier)
     {
         final Scope scope;
 
         scope = new Scope(outerScope);
         scope.addConstant("downloadsExecutorService",
                           Executors.newSingleThreadExecutor());
+        scope.addConstant("manifest",
+                          manifest);
 
         return scope;
     }
@@ -40,17 +43,20 @@ public class ManifestToPipelineFilter
     /**
      * @param pipeline
      */
-    public void addPipelineListener(final Pipeline pipeline)
+    public void addPipelineListener(final Pipeline pipeline,
+                                    final ManifestState state)
     {
         pipeline.addPipelineEntryListener(new PipelineListener()
         {
-            /**
-             *
-             */
             @Override
             public void startingPerformance()
             {
-                System.out.println("startingPerformance");
+                final Scope    scope;
+                final Manifest manifest;
+
+                scope = pipeline.getScope();
+                manifest = scope.getValue("manifest");
+                state.sendStartingManifest(manifest);
             }
 
             /**
@@ -62,30 +68,23 @@ public class ManifestToPipelineFilter
                 final Scope           scope;
                 final ExecutorService executorService;
 
-                System.out.println("completedPerformance");
                 scope = pipeline.getScope();
                 executorService = scope.getValue("downloadsExecutorService");
                 executorService.shutdown();
-            }
 
-            /**
-             *
-             * @param entry
-             */
-            @Override
-            public void performing(final Entry<?, ?, ?> entry)
-            {
-                System.out.println("performing " + entry);
-            }
+                try
+                {
+                    final Manifest manifest;
 
-            /**
-             *
-             * @param entry
-             */
-            @Override
-            public void performed(final Entry<?, ?, ?> entry)
-            {
-                System.out.println("performed " + entry);
+                    executorService.awaitTermination(1,
+                                                     TimeUnit.MINUTES);
+                    manifest = scope.getValue("manifest");
+                    state.sendFinishedManifest(manifest);
+                }
+                catch(final InterruptedException ex)
+                {
+                    ex.printStackTrace();
+                }
             }
         });
     }
@@ -102,7 +101,7 @@ public class ManifestToPipelineFilter
     /**
      * @return
      */
-    protected Filter<Dataset, State, Pipeline> getFilter()
+    protected Filter<Dataset, ManifestState, Pipeline> getFilter()
     {
         return new DatasetToPipelineFilter();
     }

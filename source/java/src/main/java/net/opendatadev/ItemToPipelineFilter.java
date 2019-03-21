@@ -5,7 +5,6 @@ import io.transmogrifier.FilterException;
 import io.transmogrifier.Transmogrifier;
 import io.transmogrifier.conductor.Pipeline;
 import io.transmogrifier.conductor.Scope;
-import io.transmogrifier.conductor.State;
 import io.transmogrifier.conductor.entries.Entry;
 import io.transmogrifier.conductor.entries.PipelineEntry;
 
@@ -17,7 +16,7 @@ import java.util.List;
  * @param <S>
  */
 public abstract class ItemToPipelineFilter<T, S>
-        implements Filter<T, State, Pipeline>
+        implements Filter<T, ManifestState, Pipeline>
 {
     /**
      * @param object
@@ -27,21 +26,23 @@ public abstract class ItemToPipelineFilter<T, S>
      */
     @Override
     public Pipeline perform(final T object,
-                            final State state)
+                            final ManifestState state)
             throws
             FilterException
     {
-        final Transmogrifier             transmogrifier;
-        final Scope                      outerScope;
-        final Scope                      scope;
-        final List<S>                    items;
-        final List<Entry<?, ?, ?>>       entries;
-        final Filter<S, State, Pipeline> filter;
-        final Pipeline                   pipeline;
+        final Transmogrifier                     transmogrifier;
+        final Scope                              outerScope;
+        final Scope                              scope;
+        final List<S>                            items;
+        final List<Entry>                        entries;
+        final Filter<S, ManifestState, Pipeline> filter;
+        final Pipeline                           pipeline;
 
         transmogrifier = state.getTransmogrifier();
         outerScope = state.getScope();
-        scope = createPipelineScope(outerScope);
+        scope = createPipelineScope(outerScope,
+                                    object,
+                                    transmogrifier);
         items = getItemsFrom(object);
         entries = new ArrayList<>();
         filter = getFilter();
@@ -50,14 +51,14 @@ public abstract class ItemToPipelineFilter<T, S>
         {
             final Scope         itemScope;
             final Pipeline      itemPipeline;
-            final State         itemState;
+            final ManifestState itemState;
             final PipelineEntry pipelineEntry;
 
             itemScope = createItemScope(scope,
                                         object,
                                         transmogrifier);
-            itemState = new State(state,
-                                  itemScope);
+            itemState = new ManifestState(state,
+                                          itemScope);
             itemPipeline = transmogrifier.transform(item,
                                                     itemState,
                                                     filter);
@@ -68,8 +69,8 @@ public abstract class ItemToPipelineFilter<T, S>
 
         pipeline = new Pipeline(scope,
                                 entries);
-
-        addPipelineListener(pipeline);
+        addPipelineListener(pipeline,
+                            state);
 
         return pipeline;
     }
@@ -79,7 +80,9 @@ public abstract class ItemToPipelineFilter<T, S>
      * @return
      * @throws FilterException
      */
-    protected Scope createPipelineScope(final Scope outerScope)
+    protected Scope createPipelineScope(final Scope outerScope,
+                                        final T object,
+                                        final Transmogrifier transmogrifier)
             throws
             FilterException
     {
@@ -113,7 +116,15 @@ public abstract class ItemToPipelineFilter<T, S>
     /**
      * @param pipeline
      */
-    public void addPipelineListener(final Pipeline pipeline)
+    protected void addPipelineListener(final Pipeline pipeline,
+                                       final ManifestState state)
+    {
+    }
+
+    /**
+     * @param entry
+     */
+    protected void addEntryFilter(final PipelineEntry entry)
     {
     }
 
@@ -126,5 +137,5 @@ public abstract class ItemToPipelineFilter<T, S>
     /**
      * @return
      */
-    protected abstract Filter<S, State, Pipeline> getFilter();
+    protected abstract Filter<S, ManifestState, Pipeline> getFilter();
 }
