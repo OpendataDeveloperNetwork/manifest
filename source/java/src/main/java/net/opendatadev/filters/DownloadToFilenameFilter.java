@@ -22,17 +22,15 @@ public class DownloadToFilenameFilter
     {
         final String src;
         final int    slashIndex;
-        final int    dotIndex;
         final String fileName;
-        final String extension;
         final String rawFileName;
 
         src = download.getSrc();
         slashIndex = src.lastIndexOf('/');
         fileName = src.substring(slashIndex + 1);
-        dotIndex = fileName.indexOf('.');
-        extension = fileName.substring(dotIndex + 1);
-        rawFileName = datasetName + "-raw." + extension;
+        rawFileName = String.format("%s-%s",
+                                    datasetName,
+                                    fileName);
 
         return rawFileName;
     }

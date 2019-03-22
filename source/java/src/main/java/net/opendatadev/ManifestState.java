@@ -5,6 +5,7 @@ import io.transmogrifier.conductor.Conductor;
 import io.transmogrifier.conductor.Scope;
 import io.transmogrifier.conductor.State;
 import net.opendatadev.Manifest.Dataset;
+import net.opendatadev.Manifest.Dataset.Download;
 
 import java.io.File;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -79,30 +80,49 @@ public class ManifestState
 
     public void sendStartingManifest(final Manifest manifest)
     {
-        listeners.forEach((listener) -> listener.starting(manifest));
+        listeners.forEach((listener) -> listener.startingManifest(manifest));
     }
 
     public void sendFinishedManifest(final Manifest manifest)
     {
-        listeners.forEach((listener) -> listener.finished(manifest));
+        listeners.forEach((listener) -> listener.finishedManifest(manifest));
     }
 
     public void sendStartingDataset(final Manifest manifest,
                                     final Dataset dataset)
     {
-        listeners.forEach((listener) -> listener.starting(manifest,
-                                                          dataset));
+        listeners.forEach((listener) -> listener.startingDataset(manifest,
+                                                                 dataset));
     }
 
     public void sendFinishedDataset(final Manifest manifest,
                                     final Dataset dataset,
-                                    final File rawFile,
-                                    final File convertedFile)
+                                    final File convertedFile,
+                                    final File... rawFiles)
     {
-        listeners.forEach((listener) -> listener.finished(manifest,
-                                                          dataset,
-                                                          rawFile,
-                                                          convertedFile));
+        listeners.forEach((listener) -> listener.finishedDataset(manifest,
+                                                                 dataset,
+                                                                 convertedFile,
+                                                                 rawFiles));
     }
 
+    public void sendStartingDownload(final Manifest manifest,
+                                     final Dataset dataset,
+                                     final Download download)
+    {
+        listeners.forEach((listener) -> listener.startingDownload(manifest,
+                                                                  dataset,
+                                                                  download));
+    }
+
+    public void sendFinishedDownload(final Manifest manifest,
+                                     final Dataset dataset,
+                                     final Download download,
+                                     final File rawFile)
+    {
+        listeners.forEach((listener) -> listener.finishedDownload(manifest,
+                                                                  dataset,
+                                                                  download,
+                                                                  rawFile));
+    }
 }

@@ -3,11 +3,18 @@ package net.opendatadev;
 import io.transmogrifier.Filter;
 import io.transmogrifier.FilterException;
 import io.transmogrifier.Transmogrifier;
+import io.transmogrifier.conductor.Field;
 import io.transmogrifier.conductor.Pipeline;
 import io.transmogrifier.conductor.PipelineListener;
 import io.transmogrifier.conductor.Scope;
+import io.transmogrifier.conductor.entries.BackgroundPipelineEntry;
+import io.transmogrifier.conductor.entries.Entry;
 import net.opendatadev.Manifest.Dataset;
+import net.opendatadev.filters.DatasetToDirFilter;
+import net.opendatadev.filters.DatasetToFileFilter;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,45 +24,81 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class ManifestToPipelineFilter
-        extends ItemToPipelineFilter<Manifest, Dataset>
+        implements Filter<Manifest, ManifestState, Pipeline>
 {
     /**
-     * @param outerScope
+     * @param manifest
+     * @param state
      * @return
      * @throws FilterException
      */
     @Override
-    protected Scope createPipelineScope(final Scope outerScope,
-                                        final Manifest manifest,
-                                        final Transmogrifier transmogrifier)
+    public Pipeline perform(final Manifest manifest,
+                            final ManifestState state)
+            throws
+            FilterException
     {
-        final Scope scope;
+        final List<Dataset>   datasets;
+        final ExecutorService executorService;
+        final Transmogrifier  transmogrifier;
+        final Scope           scope;
+        final Field<File>     rootDir;
+        final List<Entry>     entries;
+        final Pipeline        pipeline;
 
-        scope = new Scope(outerScope);
-        scope.addConstant("downloadsExecutorService",
-                          Executors.newSingleThreadExecutor());
-        scope.addConstant("manifest",
-                          manifest);
+        datasets = manifest.getDatasets();
+        executorService = Executors.newSingleThreadScheduledExecutor();
+        transmogrifier = state.getTransmogrifier();
+        scope = state.getScope();
+        rootDir = scope.getField("rootDir");
+        entries = new ArrayList<>(datasets.size());
 
-        return scope;
-    }
+        for(final Dataset dataset : datasets)
+        {
+            final Pipeline                datasetPipeline;
+            final Scope                   datasetScope;
+            final ManifestState           datasetState;
+            final File                    datasetDir;
+            final File                    datasetFile;
+            final BackgroundPipelineEntry backgroundPipelineEntry;
 
-    /**
-     * @param pipeline
-     */
-    public void addPipelineListener(final Pipeline pipeline,
-                                    final ManifestState state)
-    {
+            datasetDir = transmogrifier.transform(dataset,
+                                                  rootDir.getValue(),
+                                                  new DatasetToDirFilter());
+            datasetFile = transmogrifier.transform(dataset,
+                                                   datasetDir,
+                                                   new DatasetToFileFilter());
+
+            datasetScope = new Scope();
+            datasetScope.addConstant("manifest",
+                                     manifest);
+            datasetScope.addConstant("dataset",
+                                     dataset);
+            datasetScope.addConstant("datasetDir",
+                                     datasetDir);
+            datasetScope.addConstant("datasetFile",
+                                     datasetFile);
+            datasetState = new ManifestState(state,
+                                             datasetScope);
+            datasetPipeline = transmogrifier.transform(dataset,
+                                                       datasetState,
+                                                       new DatasetToPipelineFilter());
+            backgroundPipelineEntry = new BackgroundPipelineEntry(state,
+                                                                  datasetPipeline,
+                                                                  executorService);
+            entries.add(backgroundPipelineEntry);
+        }
+
+        pipeline = new Pipeline(state.getScope(),
+                                entries);
         pipeline.addPipelineEntryListener(new PipelineListener()
         {
+            /**
+             *
+             */
             @Override
             public void startingPerformance()
             {
-                final Scope    scope;
-                final Manifest manifest;
-
-                scope = pipeline.getScope();
-                manifest = scope.getValue("manifest");
                 state.sendStartingManifest(manifest);
             }
 
@@ -65,44 +108,22 @@ public class ManifestToPipelineFilter
             @Override
             public void completedPerformance()
             {
-                final Scope           scope;
-                final ExecutorService executorService;
-
-                scope = pipeline.getScope();
-                executorService = scope.getValue("downloadsExecutorService");
                 executorService.shutdown();
 
                 try
                 {
-                    final Manifest manifest;
-
                     executorService.awaitTermination(1,
                                                      TimeUnit.MINUTES);
-                    manifest = scope.getValue("manifest");
-                    state.sendFinishedManifest(manifest);
                 }
                 catch(final InterruptedException ex)
                 {
                     ex.printStackTrace();
                 }
+
+                state.sendFinishedManifest(manifest);
             }
         });
-    }
 
-    /**
-     * @param manifest
-     * @return
-     */
-    protected List<Dataset> getItemsFrom(final Manifest manifest)
-    {
-        return manifest.getDatasets();
-    }
-
-    /**
-     * @return
-     */
-    protected Filter<Dataset, ManifestState, Pipeline> getFilter()
-    {
-        return new DatasetToPipelineFilter();
+        return pipeline;
     }
 }
